@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:logging/logging.dart';
+import 'package:what_task/core/configs/theme_config.dart';
+import 'package:what_task/core/screens/main_screen.dart';
 
 void main() async {
-  // Load the init configurations
-  await init();
+  hierarchicalLoggingEnabled = true;
+  Logger.root.level = Level.CONFIG;
 
-  // Start the main app
-  runApp(const MainApp());
+  final Logger logs = Logger('Main');
+  try {
+    // Init the app
+    logs.info(
+      'Starting the initializing',
+    );
+    await init();
+
+    // Start the main app
+    logs.info('Starting the app');
+    runApp(const MainApp());
+  } catch (e, stackTrace) {
+    logs.shout(
+      'Couldn\'t start the app',
+      e,
+      stackTrace,
+    );
+    rethrow;
+  }
 }
 
 class MainApp extends StatelessWidget {
@@ -16,24 +33,38 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('Hello World!'))),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      key: key,
+      title: 'WhatTask?',
+      theme: lightThemeData(),
+      darkTheme: darkThemeData(),
+
+      home: MainScreen(),
     );
   }
 }
 
 Future<void> init() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final Logger logs = Logger('Startup');
   try {
-    // Load the environment file
-    await dotenv.load(fileName: ".env");
+    // // Load the environment file
+    // logs.info('Loading dotenv file');
+    // await dotenv.load(fileName: ".env");
 
-    // Initialize the Supabase BaaS
-    await Supabase.initialize(
-      url: dotenv.get('SUPABASE_URL'),
-      anonKey: dotenv.get('SUPABASE_KEY'),
+    // // Initialize the Supabase BaaS
+    // logs.info('Initializing SupaBase');
+    // await Supabase.initialize(
+    //   url: dotenv.get('SUPABASE_URL'),
+    //   anonKey: dotenv.get('SUPABASE_KEY'),
+    // );
+  } catch (e, stackTrace) {
+    logs.shout(
+      'Problem with initializing the app on startup',
+      e,
+      stackTrace,
     );
-  } catch (e) {
-    rethrow; // NOTE: Throw any error caught for now
+    rethrow; // !NOTE: Throw any error caught for now
   }
 }
